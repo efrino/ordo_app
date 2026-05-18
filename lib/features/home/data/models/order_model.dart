@@ -10,8 +10,9 @@ class OrderModel extends Equatable {
   final double price;
   final OrderStatus status;
   final double? penaltyAmount;
+  final int? delayDays;
   final bool hasPenalty;
-  final String? imageUrl;
+  final String? imagePath;
 
   const OrderModel({
     required this.id,
@@ -21,8 +22,9 @@ class OrderModel extends Equatable {
     required this.price,
     required this.status,
     this.penaltyAmount,
+    this.delayDays,
     this.hasPenalty = false,
-    this.imageUrl,
+    this.imagePath,
   });
 
   @override
@@ -34,8 +36,9 @@ class OrderModel extends Equatable {
         price,
         status,
         penaltyAmount,
+        delayDays,
         hasPenalty,
-        imageUrl,
+        imagePath,
       ];
 }
 
@@ -44,32 +47,35 @@ class BannerModel extends Equatable {
   final String subtitle;
   final String period;
   final int color;
+  final String imagePath;
 
   const BannerModel({
     required this.title,
     required this.subtitle,
     required this.period,
     required this.color,
+    required this.imagePath,
   });
 
   @override
-  List<Object?> get props => [title, subtitle, period, color];
+  List<Object?> get props => [title, subtitle, period, color, imagePath];
 }
 
-// Dummy data
 class DummyData {
   static List<BannerModel> get banners => [
         const BannerModel(
           title: '20% Diskon',
           subtitle: 'American House',
           period: 'Periode 19 Nov 2023 s/d 15 Des 2023',
-          color: 0xFF334A34,
+          color: 0xFF39413D,
+          imagePath: 'assets/images/carousel-1.png',
         ),
         const BannerModel(
           title: '20% Discount',
           subtitle: 'American House',
           period: 'Periode 19 Nov 2023 s/d 15 Des 2023',
           color: 0xFF9ACA3E,
+          imagePath: 'assets/images/carousel-2.png',
         ),
       ];
 
@@ -80,8 +86,9 @@ class DummyData {
           address: 'Lohos, Kavling A1, Blok B No. 6',
           date: '25/11/2022, 09:00',
           price: 850000000,
-          status: OrderStatus.pemesanan,
+          status: OrderStatus.pembangunan,
           hasPenalty: false,
+          imagePath: 'assets/images/candra-bhirawa.png',
         ),
         const OrderModel(
           id: '#88172647B24',
@@ -91,7 +98,9 @@ class DummyData {
           price: 985799500,
           status: OrderStatus.administrasi,
           hasPenalty: true,
-          penaltyAmount: 550000,
+          penaltyAmount: 5540000,
+          delayDays: 7,
+          imagePath: 'assets/images/bukit-raya-residence.png',
         ),
         const OrderModel(
           id: '#88172647B25',
@@ -102,6 +111,8 @@ class DummyData {
           status: OrderStatus.pembangunan,
           hasPenalty: true,
           penaltyAmount: 750000,
+          delayDays: 3,
+          imagePath: 'assets/images/placeholder-active-transaction.png',
         ),
       ];
 }

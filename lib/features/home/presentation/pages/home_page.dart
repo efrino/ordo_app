@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../bloc/home_bloc.dart';
 import '../../data/models/order_model.dart';
@@ -23,74 +23,74 @@ class _HomePageState extends State<HomePage> {
     return BlocBuilder<HomeBloc, HomeState>(
       builder: (context, state) {
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: AppColors.white,
           body: SafeArea(
             bottom: false,
             child: Column(
               children: [
                 Expanded(
                   child: state.isEmpty
-                      ? Padding(
-                          padding: const EdgeInsets.fromLTRB(25, 40, 25, 0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // App Bar
-                              const HomeAppBar(),
-                              const SizedBox(height: 30),
-
-                              // Banner
-                              BannerCarousel(banners: state.banners),
-                              const SizedBox(height: 30),
-
-                              // Pesanan Terbaru Header
-                              const _PesananHeader(hasOrders: false),
-                              const SizedBox(height: 20),
-
-                              // Empty Order Content
-                              EmptyOrderWidget(
-                                onExplore: () => context
-                                    .read<HomeBloc>()
-                                    .add(const HomeExploreProperty()),
-                              ),
-                            ],
+                      ? SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(25, 40, 25, 20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const HomeAppBar(),
+                                const SizedBox(height: 30),
+                                BannerCarousel(banners: state.banners),
+                                const SizedBox(height: 30),
+                                const _PesananHeader(hasOrders: false),
+                                const SizedBox(height: 5),
+                                EmptyOrderWidget(
+                                  onExplore: () => context
+                                      .read<HomeBloc>()
+                                      .add(const HomeExploreProperty()),
+                                ),
+                              ],
+                            ),
                           ),
                         )
-                      : SingleChildScrollView(
-                          padding: const EdgeInsets.fromLTRB(25, 40, 25, 0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // App Bar
-                              const HomeAppBar(),
-                              const SizedBox(height: 30),
-
-                              // Banner
-                              BannerCarousel(banners: state.banners),
-                              const SizedBox(height: 30),
-
-                              // Pesanan Terbaru Header
-                              const _PesananHeader(hasOrders: true),
-                              const SizedBox(height: 20),
-
-                              // Tab filter
-                              OrderStatusTab(
-                                selectedIndex: state.selectedTab,
-                                onChanged: (i) => context
-                                    .read<HomeBloc>()
-                                    .add(HomeTabChanged(i)),
+                      : LayoutBuilder(
+                          builder: (context, constraints) {
+                            return SingleChildScrollView(
+                              physics: const BouncingScrollPhysics(),
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: constraints.maxHeight,
+                                ),
+                                child: IntrinsicHeight(
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const HomeAppBar(),
+                                        const SizedBox(height: 15),
+                                        BannerCarousel(banners: state.banners),
+                                        const SizedBox(height: 10),
+                                        const _PesananHeader(hasOrders: true),
+                                        const SizedBox(height: 8),
+                                        OrderPipelineTracker(
+                                          selectedIndex: state.selectedTab,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        _OrderSlider(orders: state.orders),
+                                        const SizedBox(height: 10),
+                                        Expanded(
+                                          child: ConstrainedBox(
+                                            constraints: const BoxConstraints(minHeight: 280),
+                                            child: const HomeMenuGrid(),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
-                              const SizedBox(height: 15),
-
-                              // Order slider (3 items)
-                              _OrderSlider(orders: state.orders),
-                              const SizedBox(height: 30),
-
-                              // Menu Grid
-                              const HomeMenuGrid(),
-                              const SizedBox(height: 30),
-                            ],
-                          ),
+                            );
+                          },
                         ),
                 ),
 
@@ -126,22 +126,23 @@ class _PesananHeader extends StatelessWidget {
             Text(
               'Pesanan Terbaru',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
                 color: AppColors.dark,
               ),
             ),
             Text(
               'Daftar pesanan terbaru anda',
-              style: TextStyle(fontSize: 12, color: AppColors.gray400),
+              style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
             ),
           ],
         ),
         if (hasOrders)
-          const Icon(
-            Icons.arrow_forward_ios,
-            color: AppColors.dark,
-            size: 18,
+          SvgPicture.asset(
+            'assets/icons/arrow-right.svg',
+            colorFilter: const ColorFilter.mode(AppColors.dark, BlendMode.srcIn),
+            width: 16,
+            height: 16,
           ),
       ],
     );
@@ -162,39 +163,48 @@ class _OrderSlider extends StatefulWidget {
 class _OrderSliderState extends State<_OrderSlider> {
   int _current = 0;
 
+  void _goNext() {
+    if (_current < widget.orders.length - 1) setState(() => _current++);
+  }
+
+  void _goPrev() {
+    if (_current > 0) setState(() => _current--);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CarouselSlider(
-          options: CarouselOptions(
-            height: null, // auto height
-            viewportFraction: 1.0,
-            enableInfiniteScroll: false,
-            onPageChanged: (index, _) => setState(() => _current = index),
+        GestureDetector(
+          onHorizontalDragEnd: (details) {
+            final velocity = details.primaryVelocity ?? 0;
+            if (velocity < -100) _goNext();
+            if (velocity > 100) _goPrev();
+          },
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: child,
+            ),
+            child: KeyedSubtree(
+              key: ValueKey(_current),
+              child: OrderCard(order: widget.orders[_current]),
+            ),
           ),
-          items: widget.orders
-              .map((order) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
-                    child: OrderCard(order: order),
-                  ))
-              .toList(),
         ),
-        const SizedBox(height: 10),
-
-        // Dot indicator
+        const SizedBox(height: 8),
+        // Square dot indicator
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: widget.orders.asMap().entries.map((entry) {
+            final isActive = _current == entry.key;
             return Container(
-              width: _current == entry.key ? 16 : 6,
+              width: isActive ? 16 : 6,
               height: 6,
               margin: const EdgeInsets.symmetric(horizontal: 2),
-              decoration: BoxDecoration(
-                color:
-                    _current == entry.key ? AppColors.dark : AppColors.gray100,
-                borderRadius: BorderRadius.circular(3),
-              ),
+              color: isActive ? AppColors.dark : AppColors.gray100,
             );
           }).toList(),
         ),

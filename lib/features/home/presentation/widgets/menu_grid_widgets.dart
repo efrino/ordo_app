@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'home_bottom_sheets.dart';
 
@@ -10,14 +11,6 @@ class HomeMenuGrid extends StatelessWidget {
     _MenuItem(label: 'Tahap\nAdministrasi', index: 1),
     _MenuItem(label: 'Tahap\nPembangunan', index: 2),
     _MenuItem(label: 'Tahap\nAkad & Serah Terima', index: 3),
-  ];
-
-  // Placeholder image colors per menu
-  static const _menuColors = [
-    Color(0xFF8BC34A),
-    Color(0xFF607D8B),
-    Color(0xFFFF8F00),
-    Color(0xFF78909C),
   ];
 
   @override
@@ -35,39 +28,72 @@ class HomeMenuGrid extends StatelessWidget {
                 Text(
                   'Menu',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.dark,
                   ),
                 ),
                 Text(
                   'Daftar menu transaksi',
-                  style: TextStyle(fontSize: 12, color: AppColors.gray400),
+                  style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
                 ),
               ],
             ),
-            Icon(Icons.grid_view_rounded, color: AppColors.dark, size: 24),
+            SvgPicture.asset(
+              'assets/icons/category-fill.svg',
+              colorFilter: const ColorFilter.mode(AppColors.dark, BlendMode.srcIn),
+              width: 22,
+              height: 22,
+            ),
           ],
         ),
-        const SizedBox(height: 15),
+        const SizedBox(height: 10),
 
-        // 2x2 Grid
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.4,
-          children: _menus.map((menu) {
-            return GestureDetector(
-              onTap: () => showHomeBottomSheet(context, menu.index),
-              child: _MenuCard(
-                menu: menu,
-                bgColor: _menuColors[menu.index],
+        // 2x2 Grid utilizing Expanded to fit exact remaining space
+        Expanded(
+          child: Column(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => showHomeBottomSheet(context, 0),
+                        child: _MenuCard(menu: _menus[0]),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => showHomeBottomSheet(context, 1),
+                        child: _MenuCard(menu: _menus[1]),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            );
-          }).toList(),
+              const SizedBox(height: 8),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => showHomeBottomSheet(context, 2),
+                        child: _MenuCard(menu: _menus[2]),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => showHomeBottomSheet(context, 3),
+                        child: _MenuCard(menu: _menus[3]),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -82,90 +108,151 @@ class _MenuItem {
 
 class _MenuCard extends StatelessWidget {
   final _MenuItem menu;
-  final Color bgColor;
 
-  const _MenuCard({super.key, required this.menu, required this.bgColor});
+  const _MenuCard({super.key, required this.menu});
 
   @override
   Widget build(BuildContext context) {
+    // Styling logic based on reference
+    final isFirst = menu.index == 0;
+    final isLocked = menu.index >= 2; // 0% progress — not yet started
+
+    final backgroundColor = isFirst
+        ? AppColors.dark
+        : isLocked
+            ? AppColors.neutral100
+            : AppColors.white;
+    final textColor = isFirst
+        ? AppColors.white
+        : isLocked
+            ? AppColors.gray300
+            : AppColors.dark;
+
+    // Progress circle styling
+    Color circleBorderColor;
+    Color circleBgColor;
+    Color circleTextColor;
+    String progressText;
+
+    if (menu.index == 0) {
+      circleBorderColor = AppColors.red;
+      circleBgColor = AppColors.dark;
+      circleTextColor = AppColors.white;
+      progressText = '100%';
+    } else if (menu.index == 1) {
+      circleBorderColor = AppColors.accentGreen;
+      circleBgColor = AppColors.white;
+      circleTextColor = AppColors.dark;
+      progressText = '50%';
+    } else {
+      circleBorderColor = AppColors.gray200;
+      circleBgColor = isLocked ? AppColors.neutral100 : AppColors.white;
+      circleTextColor = AppColors.gray300;
+      progressText = '0%';
+    }
+
+    // Local asset images from Figma
+    const imagePaths = [
+      'assets/images/tahap-pemesanan.png',
+      'assets/images/tahap-administrasi.png',
+      'assets/images/tahap-pembangunan.png',
+      'assets/images/tahap-akad.png',
+    ];
+
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.gray100.withOpacity(0.4),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.gray100, width: 0.5),
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha:0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
+      clipBehavior: Clip.hardEdge,
       child: Stack(
         children: [
-          // Background color block (right half simulation)
-          Positioned(
-            right: 0,
-            top: 0,
-            bottom: 0,
-            width: 80,
-            child: Container(
-              decoration: BoxDecoration(
-                color: bgColor.withOpacity(0.15),
-                borderRadius: const BorderRadius.horizontal(
-                  right: Radius.circular(12),
+          // Background accent for the first card
+          if (isFirst)
+            Positioned(
+              right: -20,
+              bottom: -20,
+              child: Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.white.withValues(alpha: 0.1),
                 ),
               ),
             ),
-          ),
 
-          // Image placeholder
+          // Image on the bottom right
           Positioned(
-            right: 5,
-            bottom: 5,
-            child: Container(
-              width: 65,
-              height: 65,
-              decoration: BoxDecoration(
-                color: bgColor.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                _getIcon(menu.index),
-                color: bgColor,
-                size: 36,
+            right: 0,
+            bottom: 0,
+            width: 110,
+            height: 110,
+            child: Image.asset(
+              imagePaths[menu.index],
+              fit: BoxFit.contain,
+              alignment: Alignment.bottomRight,
+              errorBuilder: (_, __, ___) => Icon(
+                _getFallbackIcon(menu.index),
+                color: isFirst
+                    ? AppColors.white.withValues(alpha: 0.5)
+                    : AppColors.gray200,
+                size: 50,
               ),
             ),
           ),
 
-          // Progress indicator (top left)
+          // Progress Circle (Bottom Left)
           Positioned(
-            top: 8,
-            left: 8,
+            left: 12,
+            bottom: 12,
             child: Container(
-              width: 30,
-              height: 30,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
-                color: bgColor,
+                color: circleBgColor,
                 shape: BoxShape.circle,
+                border: Border.all(color: circleBorderColor, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha:0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Center(
                 child: Text(
-                  '${(menu.index + 1) * 25}',
-                  style: const TextStyle(
-                    color: AppColors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
+                  progressText,
+                  style: TextStyle(
+                    color: circleTextColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
             ),
           ),
 
-          // Label
+          // Label (Top Left)
           Positioned(
-            left: 10,
-            bottom: 10,
-            right: 75,
+            left: 12,
+            top: 12,
+            right: 12,
             child: Text(
               menu.label,
-              style: const TextStyle(
+              style: TextStyle(
+                fontFamily: 'Outfit',
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: AppColors.dark,
+                color: textColor,
                 height: 1.3,
               ),
             ),
@@ -175,18 +262,18 @@ class _MenuCard extends StatelessWidget {
     );
   }
 
-  IconData _getIcon(int index) {
+  IconData _getFallbackIcon(int index) {
     switch (index) {
       case 0:
-        return Icons.home_outlined;
+        return Icons.home;
       case 1:
-        return Icons.business_outlined;
+        return Icons.folder;
       case 2:
-        return Icons.construction_outlined;
+        return Icons.construction;
       case 3:
-        return Icons.door_front_door_outlined;
+        return Icons.door_front_door;
       default:
-        return Icons.home_outlined;
+        return Icons.home;
     }
   }
 }

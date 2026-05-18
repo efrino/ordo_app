@@ -96,7 +96,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   void _onLoadData(HomeLoadData event, Emitter<HomeState> emit) {
     emit(state.copyWith(isLoading: true));
 
-    // Simulate loading
     final orders = DummyData.orders;
     final hasPenalty = orders.any((o) => o.hasPenalty);
 
@@ -105,8 +104,22 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           hasPenalty ? HomeDisplayState.penalty : HomeDisplayState.loaded,
       orders: orders,
       banners: DummyData.banners,
+      selectedTab: _statusToTabIndex(orders.first.status),
       isLoading: false,
     ));
+  }
+
+  int _statusToTabIndex(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pemesanan:
+        return 0;
+      case OrderStatus.administrasi:
+        return 1;
+      case OrderStatus.pembangunan:
+        return 2;
+      case OrderStatus.akadSerahTerima:
+        return 3;
+    }
   }
 
   void _onExploreProperty(HomeExploreProperty event, Emitter<HomeState> emit) {

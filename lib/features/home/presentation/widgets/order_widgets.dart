@@ -1,57 +1,140 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/models/order_model.dart';
 
-// ─── ORDER STATUS TAB ─────────────────────────────────────────────────────────
+// ─── ORDER PIPELINE TRACKER ─────────────────────────────────────────────────────
 
-class OrderStatusTab extends StatelessWidget {
+class OrderPipelineTracker extends StatelessWidget {
   final int selectedIndex;
-  final Function(int) onChanged;
 
-  const OrderStatusTab({
+  const OrderPipelineTracker({
     super.key,
     required this.selectedIndex,
-    required this.onChanged,
   });
 
-  static const _tabs = [
+  static const _steps = [
     'Pemesanan',
     'Administrasi',
     'Pembangunan',
-    'Akad Terima',
+    'Serah Terima',
   ];
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Row(
-        children: _tabs.asMap().entries.map((entry) {
-          final isSelected = entry.key == selectedIndex;
-          return GestureDetector(
-            onTap: () => onChanged(entry.key),
-            child: Container(
-              margin: const EdgeInsets.only(right: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.dark : AppColors.gray100,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                entry.value,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: isSelected ? AppColors.white : AppColors.gray300,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: List.generate(_steps.length * 2 - 1, (index) {
+          if (index.isOdd) {
+            final stepIndex = index ~/ 2;
+            final isSolid = (stepIndex + 1) <= selectedIndex;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: SizedBox(
+                  height: 2,
+                  child: CustomPaint(
+                    painter: _DashedLinePainter(
+                      color: isSolid ? AppColors.accentGreen : AppColors.gray200,
+                      solid: isSolid,
+                    ),
+                  ),
                 ),
               ),
-            ),
+            );
+          }
+          final stepIndex = index ~/ 2;
+          final isCompleted = stepIndex < selectedIndex;
+          final isCurrent = stepIndex == selectedIndex;
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SvgPicture.asset(
+                isCompleted
+                    ? 'assets/icons/tick-circle.svg'
+                    : isCurrent
+                        ? 'assets/icons/time-circle.svg'
+                        : 'assets/icons/dot-circle.svg',
+                colorFilter: ColorFilter.mode(
+                  isCompleted
+                      ? AppColors.accentGreen
+                      : isCurrent
+                          ? AppColors.dark
+                          : AppColors.gray200,
+                  BlendMode.srcIn,
+                ),
+                width: 18,
+                height: 18,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _steps[stepIndex],
+                textAlign: TextAlign.center,
+                style: AppTextStyles.textXSRegular.copyWith(
+                  fontSize: 9,
+                  fontWeight: (isCompleted || isCurrent) ? FontWeight.w500 : FontWeight.w400,
+                  color: (isCompleted || isCurrent) ? AppColors.dark : AppColors.gray300,
+                ),
+              ),
+            ],
           );
-        }).toList(),
+        }),
       ),
     );
   }
+}
+
+// ─── DASHED LINE PAINTER ─────────────────────────────────────────────────────
+
+class _DashedLinePainter extends CustomPainter {
+  final Color color;
+  final bool solid;
+
+  const _DashedLinePainter({required this.color, this.solid = false});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+
+    if (solid) {
+      canvas.drawLine(Offset(0, size.height / 2),
+          Offset(size.width, size.height / 2), paint);
+      return;
+    }
+
+    const dashWidth = 4.0;
+    const gapWidth = 3.0;
+    double x = 0;
+    while (x < size.width) {
+      canvas.drawLine(
+        Offset(x, size.height / 2),
+        Offset((x + dashWidth).clamp(0, size.width), size.height / 2),
+        paint,
+      );
+      x += dashWidth + gapWidth;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedLinePainter old) =>
+      old.color != color || old.solid != solid;
 }
 
 // ─── ORDER CARD ───────────────────────────────────────────────────────────────
@@ -62,38 +145,24 @@ class OrderCard extends StatelessWidget {
   const OrderCard({super.key, required this.order});
 
   String _formatCurrency(double amount) {
-    final formatter = NumberFormat.currency(
+    return NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp ',
       decimalDigits: 0,
-    );
-    return formatter.format(amount);
-  }
-
-  String get _statusLabel {
-    switch (order.status) {
-      case OrderStatus.pemesanan:
-        return 'Pemesanan';
-      case OrderStatus.administrasi:
-        return 'Administrasi';
-      case OrderStatus.pembangunan:
-        return 'Pembangunan';
-      case OrderStatus.akadSerahTerima:
-        return 'Akad & Serah';
-    }
+    ).format(amount);
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -108,11 +177,8 @@ class OrderCard extends StatelessWidget {
             children: [
               Text(
                 order.id,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppColors.gray200,
-                  fontWeight: FontWeight.w400,
-                ),
+                style: AppTextStyles.textXSRegular
+                    .copyWith(color: AppColors.gray200),
               ),
               Container(
                 padding:
@@ -122,12 +188,9 @@ class OrderCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  _statusLabel,
-                  style: const TextStyle(
-                    color: AppColors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  'Komersil',
+                  style: AppTextStyles.textXSMedium
+                      .copyWith(color: AppColors.white),
                 ),
               ),
             ],
@@ -136,21 +199,20 @@ class OrderCard extends StatelessWidget {
 
           // Content row
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Property image
-              Container(
-                width: 70,
-                height: 70,
-                decoration: BoxDecoration(
-                  color: AppColors.gray100,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.home_work_outlined,
-                  color: AppColors.gray200,
-                  size: 32,
-                ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: order.imagePath != null
+                    ? Image.asset(
+                        order.imagePath!,
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _imageFallback(),
+                      )
+                    : _imageFallback(),
               ),
               const SizedBox(width: 12),
 
@@ -159,24 +221,34 @@ class OrderCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      order.propertyName,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.dark,
-                      ),
+                    Row(
+                      children: [
+                        SvgPicture.asset(
+                          'assets/icons/building-unfill.svg',
+                          colorFilter: const ColorFilter.mode(
+                              AppColors.gray200, BlendMode.srcIn),
+                          width: 11,
+                          height: 11,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          order.propertyName,
+                          style: AppTextStyles.textSSemiBold
+                              .copyWith(color: AppColors.dark),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Row(
                       children: [
                         const Icon(Icons.location_on_outlined,
-                            size: 12, color: AppColors.gray200),
+                            size: 11, color: AppColors.gray200),
                         const SizedBox(width: 3),
                         Expanded(
                           child: Text(
                             order.address,
-                            style: AppTextStyles.caption,
+                            style: AppTextStyles.textXSRegular
+                                .copyWith(color: AppColors.textSecondary),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -187,19 +259,20 @@ class OrderCard extends StatelessWidget {
                     Row(
                       children: [
                         const Icon(Icons.access_time_outlined,
-                            size: 12, color: AppColors.gray200),
+                            size: 11, color: AppColors.gray200),
                         const SizedBox(width: 3),
-                        Text(order.date, style: AppTextStyles.caption),
+                        Text(
+                          order.date,
+                          style: AppTextStyles.textXSRegular
+                              .copyWith(color: AppColors.textSecondary),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 6),
                     Text(
                       _formatCurrency(order.price),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.dark,
-                      ),
+                      style: AppTextStyles.textMSemiBold
+                          .copyWith(color: AppColors.dark),
                     ),
                   ],
                 ),
@@ -221,36 +294,44 @@ class OrderCard extends StatelessWidget {
                         size: 14, color: AppColors.red),
                     const SizedBox(width: 5),
                     Text(
-                      'Denda Rp ${NumberFormat('#,###', 'id_ID').format(order.penaltyAmount)}',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.red,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      'Denda ${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(order.penaltyAmount)}',
+                      style: AppTextStyles.textXSMedium
+                          .copyWith(color: AppColors.red),
                     ),
                   ],
                 ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.red),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text(
-                    'Tertunggak',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: AppColors.red,
-                      fontWeight: FontWeight.w500,
+                if (order.delayDays != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.accentGreen,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'Terlambat ${order.delayDays} hari',
+                      style: AppTextStyles.textXSMedium
+                          .copyWith(color: AppColors.white),
                     ),
                   ),
-                ),
               ],
             ),
           ],
         ],
       ),
+    );
+  }
+
+  Widget _imageFallback() {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: AppColors.gray100,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: const Icon(Icons.home_work_outlined,
+          color: AppColors.gray200, size: 28),
     );
   }
 }
@@ -264,72 +345,54 @@ class EmptyOrderWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-          // Illustration Box
+    return SizedBox(
+      width: double.infinity,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          const SizedBox(height: 20),
           Image.asset(
             'assets/icons/empty-state.png',
-            width: 318,
-            height: 196,
+            width: 270,
             fit: BoxFit.contain,
           ),
           const SizedBox(height: 20),
-
-          // Text Wrapper
-          const Column(
-            children: [
-              Text(
-                'Pesanan Kosong',
-                style: TextStyle(
-                  fontFamily: 'Outfit',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF334A34),
-                ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                'Ayo tambahkan pesanan baru',
-                style: TextStyle(
-                  fontFamily: 'Outfit',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFF9B9B9B),
-                ),
-              ),
-            ],
+          Text(
+            'Pesanan Kosong',
+            style: AppTextStyles.textLSemiBold.copyWith(color: AppColors.dark),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Ayo tambahkan pesanan baru',
+            style:
+                AppTextStyles.textSRegular.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 20),
-
-          // Explore button
           GestureDetector(
             onTap: onExplore,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
               decoration: BoxDecoration(
-                color: const Color(0xFF334A34),
+                color: AppColors.dark,
                 borderRadius: BorderRadius.circular(39),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.search, color: Colors.white, size: 20),
-                  SizedBox(width: 10),
+                  const Icon(Icons.search, color: AppColors.white, size: 20),
+                  const SizedBox(width: 10),
                   Text(
                     'Eksplor Properti',
-                    style: TextStyle(
-                      fontFamily: 'Outfit',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                    ),
+                    style: AppTextStyles.textLMedium
+                        .copyWith(color: AppColors.white),
                   ),
                 ],
               ),
             ),
           ),
         ],
+      ),
     );
   }
 }

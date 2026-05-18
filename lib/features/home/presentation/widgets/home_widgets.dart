@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/models/order_model.dart';
 
@@ -13,24 +14,23 @@ class HomeAppBar extends StatelessWidget {
     return Row(
       children: [
         // Avatar
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF6A8B92),
-                border: Border.all(color: AppColors.white, width: 1.5),
-              ),
-              child: const CircleAvatar(
-                radius: 30,
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.white, width: 1.5),
+          ),
+          child: ClipOval(
+            child: Image.asset(
+              'assets/images/justin.png',
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const CircleAvatar(
                 backgroundColor: Color(0xFF6A8B92),
-                child: Icon(Icons.person, color: AppColors.white, size: 28),
+                child: Icon(Icons.person, color: AppColors.white, size: 24),
               ),
             ),
-          ],
+          ),
         ),
         const SizedBox(width: 10),
 
@@ -40,14 +40,15 @@ class HomeAppBar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Temukan Hunian Impian',
-                style: AppTextStyles.heading2.copyWith(fontSize: 16),
+                'Temukan\nHunian Impian',
+                style: AppTextStyles.textSMedium,
                 maxLines: 2,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 'Agen Properti Terbaik',
-                style: AppTextStyles.body,
+                style: AppTextStyles.textXSRegular
+                    .copyWith(color: AppColors.textSecondary),
               ),
             ],
           ),
@@ -55,14 +56,14 @@ class HomeAppBar extends StatelessWidget {
 
         // Bell icon
         Container(
-          width: 35,
-          height: 35,
+          width: 30,
+          height: 30,
           decoration: BoxDecoration(
             color: AppColors.white,
-            borderRadius: BorderRadius.circular(18.5),
+            borderRadius: BorderRadius.circular(15),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFC5D1C6).withOpacity(0.16),
+                color: const Color(0xFFC5D1C6).withValues(alpha: 0.16),
                 blurRadius: 11,
                 offset: const Offset(0, 5),
               ),
@@ -72,24 +73,29 @@ class HomeAppBar extends StatelessWidget {
             clipBehavior: Clip.none,
             alignment: Alignment.center,
             children: [
-              const Icon(Icons.notifications_outlined,
-                  color: AppColors.dark, size: 20),
+              SvgPicture.asset(
+                'assets/icons/bell-fill.svg',
+                colorFilter:
+                    const ColorFilter.mode(AppColors.dark, BlendMode.srcIn),
+                width: 22,
+                height: 22,
+              ),
               Positioned(
                 right: -4,
                 top: -4,
                 child: Container(
-                  width: 16,
-                  height: 16,
+                  width: 14,
+                  height: 14,
                   decoration: BoxDecoration(
                     color: AppColors.red,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(7),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Text(
                       '3',
-                      style: TextStyle(
+                      style: AppTextStyles.textXSRegular.copyWith(
                         color: AppColors.white,
-                        fontSize: 8,
+                        fontSize: 7,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -125,7 +131,7 @@ class _BannerCarouselState extends State<BannerCarousel> {
         CarouselSlider(
           options: CarouselOptions(
             height: 155,
-            viewportFraction: 0.88,
+            viewportFraction: 0.93,
             padEnds: false,
             enableInfiniteScroll: false,
             autoPlay: true,
@@ -135,22 +141,6 @@ class _BannerCarouselState extends State<BannerCarousel> {
           items: widget.banners
               .map((banner) => _BannerItem(banner: banner))
               .toList(),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: widget.banners.asMap().entries.map((entry) {
-            return Container(
-              width: _current == entry.key ? 16 : 6,
-              height: 6,
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              decoration: BoxDecoration(
-                color:
-                    _current == entry.key ? AppColors.dark : AppColors.gray100,
-                borderRadius: BorderRadius.circular(3),
-              ),
-            );
-          }).toList(),
         ),
       ],
     );
@@ -174,60 +164,64 @@ class _BannerItem extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // House illustration placeholder
+          // House image on the right
           Positioned(
-            right: -20,
-            bottom: -20,
-            child: Opacity(
-              opacity: 0.3,
-              child: Icon(
-                Icons.home,
-                size: 160,
-                color: AppColors.white.withOpacity(0.4),
+            right: 0,
+            bottom: 0,
+            top: 0,
+            width: 150,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topRight: Radius.circular(15),
+                bottomRight: Radius.circular(15),
+              ),
+              child: Image.asset(
+                banner.imagePath,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    Container(color: AppColors.gray200),
               ),
             ),
           ),
 
           // Content
           Padding(
-            padding: const EdgeInsets.all(30),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  banner.title,
-                  style: const TextStyle(
-                    fontFamily: 'Rubik',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.white,
-                  ),
-                ),
-                const SizedBox(height: 7),
-                Text(
-                  banner.subtitle,
-                  style: const TextStyle(
-                    fontFamily: 'Outfit',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.white,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      banner.title.split(' ')[0],
+                      style: AppTextStyles.textXLSemiBold
+                          .copyWith(color: AppColors.white),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      banner.title.split(' ').skip(1).join(' '),
+                      style: AppTextStyles.textSRegular
+                          .copyWith(color: AppColors.white),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 4),
+                Text(
+                  banner.subtitle,
+                  style: AppTextStyles.textLSemiBold
+                      .copyWith(color: AppColors.white),
+                ),
+                const SizedBox(height: 6),
                 Row(
                   children: [
                     const Icon(Icons.calendar_today_outlined,
-                        color: AppColors.white, size: 12),
+                        color: AppColors.white, size: 10),
                     const SizedBox(width: 5),
                     Text(
                       banner.period,
-                      style: const TextStyle(
-                        fontFamily: 'Outfit',
-                        fontSize: 10,
-                        fontWeight: FontWeight.w300,
-                        color: AppColors.white,
-                      ),
+                      style: AppTextStyles.textXSLight
+                          .copyWith(color: AppColors.white),
                     ),
                   ],
                 ),
@@ -255,16 +249,35 @@ class HomeBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const items = [
-      _NavItem(icon: Icons.home_filled, label: 'Home'),
-      _NavItem(icon: Icons.apartment_outlined, label: 'Properti'),
-      _NavItem(icon: Icons.description_outlined, label: 'Dokumen'),
-      _NavItem(icon: Icons.shopping_cart_outlined, label: 'Pesanan'),
-      _NavItem(imagePath: 'assets/icons/profile.png', label: 'Profil'),
+      _NavItem(
+        activeSvgPath: 'assets/icons/home-filled.svg',
+        inactiveSvgPath: 'assets/icons/home-outline.svg',
+        label: 'Home',
+      ),
+      _NavItem(
+        activeSvgPath: 'assets/icons/building-fill.svg',
+        inactiveSvgPath: 'assets/icons/building-unfill.svg',
+        label: 'Properti',
+      ),
+      _NavItem(
+        activeSvgPath: 'assets/icons/document-filled.svg',
+        inactiveSvgPath: 'assets/icons/document-outline.svg',
+        label: 'Dokumen',
+      ),
+      _NavItem(
+        activeSvgPath: 'assets/icons/cart-fill.svg',
+        inactiveSvgPath: 'assets/icons/cart-unfill.svg',
+        label: 'Pesanan',
+      ),
+      _NavItem(
+        activeSvgPath: 'assets/icons/person-fill.svg',
+        inactiveSvgPath: 'assets/icons/person-unfill.svg',
+        label: 'Profil',
+      ),
     ];
 
     return Container(
-      height: 85,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      height: 72,
       decoration: const BoxDecoration(
         color: AppColors.white,
         boxShadow: [
@@ -276,15 +289,17 @@ class HomeBottomNavBar extends StatelessWidget {
         ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: items.asMap().entries.map((entry) {
           final isSelected = entry.key == currentIndex;
-          return GestureDetector(
-            onTap: () => onTap(entry.key),
-            child: _NavMenuWidget(
-              item: entry.value,
-              isSelected: isSelected,
+          return Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => onTap(entry.key),
+              child: _NavMenuWidget(
+                item: entry.value,
+                isSelected: isSelected,
+              ),
             ),
           );
         }).toList(),
@@ -294,10 +309,14 @@ class HomeBottomNavBar extends StatelessWidget {
 }
 
 class _NavItem {
-  final IconData? icon;
-  final String? imagePath;
+  final String activeSvgPath;
+  final String inactiveSvgPath;
   final String label;
-  const _NavItem({this.icon, this.imagePath, required this.label});
+  const _NavItem({
+    required this.activeSvgPath,
+    required this.inactiveSvgPath,
+    required this.label,
+  });
 }
 
 class _NavMenuWidget extends StatelessWidget {
@@ -310,43 +329,36 @@ class _NavMenuWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        if (item.imagePath != null)
-          Image.asset(
-            item.imagePath!,
-            width: 24,
-            height: 24,
-            color: isSelected ? AppColors.dark : AppColors.gray200,
-          )
-        else if (item.icon != null)
-          Icon(
-            item.icon,
-            color: isSelected ? AppColors.dark : AppColors.gray200,
-            size: 24,
+        SvgPicture.asset(
+          isSelected ? item.activeSvgPath : item.inactiveSvgPath,
+          colorFilter: ColorFilter.mode(
+            isSelected ? AppColors.dark : AppColors.gray300,
+            BlendMode.srcIn,
           ),
-        const SizedBox(height: 20),
-        // Indicator bar
+          width: 24,
+          height: 24,
+        ),
+        const SizedBox(height: 16),
         Container(
-          width: 61,
-          height: 11,
+          width: 48,
+          height: 10,
           decoration: BoxDecoration(
             color: isSelected ? AppColors.dark : Colors.transparent,
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.elliptical(30.5, 11),
-              topRight: Radius.elliptical(30.5, 11),
+              topLeft: Radius.elliptical(24, 10),
+              topRight: Radius.elliptical(24, 10),
             ),
           ),
           child: isSelected
               ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 2),
-                    child: Container(
-                      width: 4,
-                      height: 4,
-                      decoration: const BoxDecoration(
-                        color: AppColors.white,
-                        shape: BoxShape.circle,
-                      ),
+                  child: Container(
+                    width: 4,
+                    height: 4,
+                    decoration: const BoxDecoration(
+                      color: AppColors.white,
+                      shape: BoxShape.circle,
                     ),
                   ),
                 )

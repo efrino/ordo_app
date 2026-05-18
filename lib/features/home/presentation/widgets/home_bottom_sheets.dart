@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/theme/app_theme.dart';
 
 // ─── BOTTOM SHEET HELPER ──────────────────────────────────────────────────────
@@ -76,21 +77,30 @@ class _BaseBottomSheet extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // Title
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.dark,
+          // Title & Divider
+          Center(
+            child: Column(
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.dark,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style:
+                      const TextStyle(fontSize: 10, color: AppColors.gray200),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: const TextStyle(fontSize: 12, color: AppColors.gray200),
-          ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 15),
+          const Divider(color: AppColors.gray100, thickness: 1),
+          const SizedBox(height: 15),
 
           // Grid menu
           GridView.count(
@@ -99,7 +109,7 @@ class _BaseBottomSheet extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 16,
             crossAxisSpacing: 10,
-            childAspectRatio: 0.85,
+            childAspectRatio: 116 / 108,
             children:
                 items.map((item) => _SheetMenuItemWidget(item: item)).toList(),
           ),
@@ -111,16 +121,20 @@ class _BaseBottomSheet extends StatelessWidget {
 }
 
 class _SheetMenuItem {
-  final IconData icon;
+  final String? svgIcon;
+  final String? textIcon;
   final String label;
-  final Color? iconColor;
-  final Color? bgColor;
+  final bool isActive;
+  final Widget? badge;
+  final double? progress;
 
   const _SheetMenuItem({
-    required this.icon,
+    this.svgIcon,
+    this.textIcon,
     required this.label,
-    this.iconColor,
-    this.bgColor,
+    this.isActive = false,
+    this.badge,
+    this.progress,
   });
 }
 
@@ -131,36 +145,179 @@ class _SheetMenuItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 55,
-          height: 55,
-          decoration: BoxDecoration(
-            color: item.bgColor ?? AppColors.background,
-            borderRadius: BorderRadius.circular(14),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(13),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          // Background Ellipse
+          Positioned(
+            left: -82,
+            top: -16,
+            child: Container(
+              width: 198,
+              height: 219,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF8F8F8),
+                shape: BoxShape.circle,
+              ),
+            ),
           ),
-          child: Icon(
-            item.icon,
-            color: item.iconColor ?? AppColors.dark,
-            size: 26,
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Icon and Badge
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    SizedBox(
+                      width: 35,
+                      height: 35,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: item.isActive
+                                  ? AppColors.dark
+                                  : AppColors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: item.progress != null
+                                  ? [
+                                      BoxShadow(
+                                        color:
+                                            Colors.black.withValues(alpha: 0.1),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ]
+                                  : (item.isActive
+                                      ? []
+                                      : [
+                                          BoxShadow(
+                                            color: Colors.black
+                                                .withValues(alpha: 0.05),
+                                            blurRadius: 5,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ]),
+                            ),
+                          ),
+                          if (item.progress != null)
+                            CircularProgressIndicator(
+                              value: item.progress,
+                              color: const Color(0xFFFF5C5C),
+                              backgroundColor: AppColors.white,
+                              strokeWidth: 3.0,
+                            ),
+                          Center(
+                            child: item.textIcon != null
+                                ? Text(
+                                    item.textIcon!,
+                                    style: TextStyle(
+                                      color: item.isActive
+                                          ? AppColors.white
+                                          : AppColors.gray300,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                : (item.svgIcon != null
+                                    ? SvgPicture.asset(
+                                        item.svgIcon!,
+                                        width: 20,
+                                        height: 20,
+                                        colorFilter: ColorFilter.mode(
+                                          item.isActive
+                                              ? AppColors.white
+                                              : AppColors.gray300,
+                                          BlendMode.srcIn,
+                                        ),
+                                      )
+                                    : const SizedBox()),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (item.badge != null)
+                      Positioned(
+                        right: -6,
+                        top: -6,
+                        child: item.badge!,
+                      ),
+                  ],
+                ),
+                // Text
+                Text(
+                  item.label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: item.isActive ? AppColors.dark : AppColors.gray300,
+                    fontWeight: FontWeight.w500,
+                    height: 1.2,
+                  ),
+                  maxLines: 2,
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          item.label,
-          style: const TextStyle(
-            fontSize: 11,
-            color: AppColors.dark,
-            fontWeight: FontWeight.w400,
-          ),
-          textAlign: TextAlign.center,
-          maxLines: 2,
-        ),
-      ],
+        ],
+      ),
     );
   }
+}
+
+Widget _buildNumberBadge(String number) {
+  return Container(
+    width: 20,
+    height: 20,
+    decoration: BoxDecoration(
+      color: const Color(0xFFFF5C5C),
+      shape: BoxShape.circle,
+      border: Border.all(color: AppColors.white, width: 2),
+    ),
+    child: Center(
+      child: Text(
+        number,
+        style: const TextStyle(
+          color: AppColors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          height: 1,
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildIconBadge() {
+  return Container(
+    width: 20,
+    height: 20,
+    decoration: BoxDecoration(
+      color: const Color(0xFFFF5C5C),
+      shape: BoxShape.circle,
+      border: Border.all(color: AppColors.white, width: 2),
+    ),
+    child: const Center(
+      child: Text(
+        '!',
+        style: TextStyle(
+          color: AppColors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          height: 1,
+        ),
+      ),
+    ),
+  );
 }
 
 // ─── 1. TAHAP PEMESANAN ───────────────────────────────────────────────────────
@@ -170,24 +327,22 @@ void _showPemesananSheet(BuildContext context) {
     context: context,
     title: 'Tahap Pemesanan',
     subtitle: 'Daftar menu tahap pemesanan',
-    items: const [
+    items: [
       _SheetMenuItem(
-        icon: Icons.attach_money_rounded,
+        svgIcon: 'assets/icons/money-receive.svg',
         label: 'Booking\nFee',
-        iconColor: Color(0xFF334A34),
-        bgColor: Color(0xFFE8F0E8),
+        isActive: true,
+        badge: _buildNumberBadge('3'),
       ),
-      _SheetMenuItem(
-        icon: Icons.receipt_long_outlined,
+      const _SheetMenuItem(
+        svgIcon: 'assets/icons/empty-wallet.svg',
         label: 'Pesanan\nBelum Bayar',
-        iconColor: Color(0xFF334A34),
-        bgColor: Color(0xFFE8F0E8),
+        isActive: false,
       ),
-      _SheetMenuItem(
-        icon: Icons.headset_mic_outlined,
-        label: 'Keluhan\nPemesanan',
-        iconColor: Color(0xFF334A34),
-        bgColor: Color(0xFFE8F0E8),
+      const _SheetMenuItem(
+        svgIcon: 'assets/icons/note-favorite-fill.svg',
+        label: 'Riwayat\nPemesanan',
+        isActive: false,
       ),
     ],
   );
@@ -200,42 +355,37 @@ void _showAdministrasiSheet(BuildContext context) {
     context: context,
     title: 'Tahap Administrasi',
     subtitle: 'Daftar menu tahap administrasi',
-    items: const [
+    items: [
       _SheetMenuItem(
-        icon: Icons.article_outlined,
-        label: 'Tahap\nSPK',
-        iconColor: Color(0xFF334A34),
-        bgColor: Color(0xFFE8F0E8),
+        svgIcon: 'assets/icons/ruler-pen.svg',
+        label: 'Tahap\nSPS',
+        isActive: true,
+        badge: _buildIconBadge(),
       ),
-      _SheetMenuItem(
-        icon: Icons.description_outlined,
-        label: 'Tahap\nSPA',
-        iconColor: Color(0xFF334A34),
-        bgColor: Color(0xFFE8F0E8),
+      const _SheetMenuItem(
+        svgIcon: 'assets/icons/edit-2.svg',
+        label: 'Tahap\nSPR',
+        isActive: false,
       ),
-      _SheetMenuItem(
-        icon: Icons.file_copy_outlined,
+      const _SheetMenuItem(
+        svgIcon: 'assets/icons/document-filled.svg',
         label: 'Tahap\nPPJB',
-        iconColor: Color(0xFF334A34),
-        bgColor: Color(0xFFE8F0E8),
+        isActive: false,
       ),
-      _SheetMenuItem(
-        icon: Icons.folder_outlined,
+      const _SheetMenuItem(
+        svgIcon: 'assets/icons/note-2-fill.svg',
         label: 'Daftar\nDokumen',
-        iconColor: Color(0xFF334A34),
-        bgColor: Color(0xFFE8F0E8),
+        isActive: false,
       ),
-      _SheetMenuItem(
-        icon: Icons.account_balance_outlined,
-        label: 'Tahap\nBPSA',
-        iconColor: Color(0xFF334A34),
-        bgColor: Color(0xFFE8F0E8),
+      const _SheetMenuItem(
+        svgIcon: 'assets/icons/archive-book-fill.svg',
+        label: 'Tahap\nSP3K',
+        isActive: false,
       ),
-      _SheetMenuItem(
-        icon: Icons.payments_outlined,
-        label: 'Muat\nAngsuran',
-        iconColor: Color(0xFF334A34),
-        bgColor: Color(0xFFE8F0E8),
+      const _SheetMenuItem(
+        svgIcon: 'assets/icons/receipt-text-fill.svg',
+        label: 'Bayar\nAngsuran',
+        isActive: false,
       ),
     ],
   );
@@ -248,36 +398,36 @@ void _showPembangunanSheet(BuildContext context) {
     context: context,
     title: 'Tahap Pembangunan',
     subtitle: 'Daftar menu tahap pembangunan rumah',
-    items: const [
+    items: [
       _SheetMenuItem(
-        icon: Icons.shopping_bag_outlined,
-        label: 'Tahap\nPesanan',
-        iconColor: Color(0xFF9ACA3E),
-        bgColor: Color(0xFFF0F8E0),
+        textIcon: '100%',
+        label: 'Tahap\nPersiapan',
+        isActive: true,
+        progress: 1.0,
       ),
       _SheetMenuItem(
-        icon: Icons.calculate_outlined,
-        label: 'Proses &\nSimulasi',
-        iconColor: Color(0xFF334A34),
-        bgColor: Color(0xFFE8F0E8),
+        textIcon: '20%',
+        label: 'Tahap\nPondasi & Struktur',
+        isActive: true,
+        progress: 0.2,
       ),
       _SheetMenuItem(
-        icon: Icons.home_work_outlined,
-        label: 'Rumah\nDibangun',
-        iconColor: Color(0xFF334A34),
-        bgColor: Color(0xFFE8F0E8),
+        textIcon: '30%',
+        label: 'Tahap\nRumah Unfinished',
+        isActive: true,
+        progress: 0.3,
       ),
       _SheetMenuItem(
-        icon: Icons.design_services_outlined,
-        label: 'Finishing &\nInterior',
-        iconColor: Color(0xFF334A34),
-        bgColor: Color(0xFFE8F0E8),
+        textIcon: '40%',
+        label: 'Tahap\nFinishing & Interior',
+        isActive: true,
+        progress: 0.4,
       ),
-      _SheetMenuItem(
-        icon: Icons.build_outlined,
-        label: 'Tahap\nPerbaikan',
-        iconColor: Color(0xFF334A34),
-        bgColor: Color(0xFFE8F0E8),
+      const _SheetMenuItem(
+        textIcon: '0%',
+        label: 'Tahap\nPembersihan',
+        isActive: true,
+        progress: 0.0,
       ),
     ],
   );
@@ -290,30 +440,27 @@ void _showAkadSerahTerimaSheet(BuildContext context) {
     context: context,
     title: 'Tahap Akad & Serah Terima',
     subtitle: 'Daftar menu tahap akad & serah terima',
-    items: const [
+    items: [
       _SheetMenuItem(
-        icon: Icons.handshake_outlined,
+        svgIcon: 'assets/icons/handshake-fill.svg',
         label: 'Tahap\nAkad',
-        iconColor: Color(0xFF9ACA3E),
-        bgColor: Color(0xFFF0F8E0),
+        isActive: true,
+        badge: _buildIconBadge(),
       ),
-      _SheetMenuItem(
-        icon: Icons.home_outlined,
+      const _SheetMenuItem(
+        svgIcon: 'assets/icons/key.svg',
         label: 'Serah Terima\nBangunan',
-        iconColor: Color(0xFF334A34),
-        bgColor: Color(0xFFE8F0E8),
+        isActive: false,
       ),
-      _SheetMenuItem(
-        icon: Icons.gavel_outlined,
-        label: 'Tahap\nLegalitas',
-        iconColor: Color(0xFF334A34),
-        bgColor: Color(0xFFE8F0E8),
+      const _SheetMenuItem(
+        svgIcon: 'assets/icons/judge-fill.svg',
+        label: 'Serah Terima\nLegalitas',
+        isActive: false,
       ),
-      _SheetMenuItem(
-        icon: Icons.list_alt_outlined,
-        label: 'Daftar\nKoneksi',
-        iconColor: Color(0xFF334A34),
-        bgColor: Color(0xFFE8F0E8),
+      const _SheetMenuItem(
+        svgIcon: 'assets/icons/danger-2-fill.svg',
+        label: 'Daftar\nKomplain',
+        isActive: false,
       ),
     ],
   );
